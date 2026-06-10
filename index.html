@@ -10,19 +10,36 @@
     --bg: #0d0f14; --surface: #141720; --border: #1e2230;
     --label: #6b7294; --text: #e2e6f3; --text-dim: #9aa0bc;
     --gain: #22d987; --gain-dim: #14492e; --loss: #f05252; --loss-dim: #4a1a1a;
-    --accent: #5b6ef5; --accent2: #a78bfa;
+    --accent: #5b6ef5;
   }
   body { background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; font-size: 13px; min-height: 100vh; }
 
-  #loader { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; gap: 16px; }
+  /* TOKEN SCREEN */
+  #token-screen {
+    display: flex; flex-direction: column; justify-content: center;
+    min-height: 100vh; padding: 24px;
+  }
+  #token-screen h2 { font-size: 18px; margin-bottom: 6px; }
+  #token-screen p { color: var(--text-dim); font-size: 12px; margin-bottom: 20px; line-height: 1.6; }
+  textarea {
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px; color: var(--text); font-size: 11px;
+    font-family: monospace; resize: none; height: 100px; margin-bottom: 12px;
+  }
+  .btn { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 14px; font-size: 14px; cursor: pointer; width: 100%; font-weight: 600; }
+  .btn-sm { background: var(--surface); color: var(--text-dim); border: 1px solid var(--border); border-radius: 6px; padding: 8px 14px; font-size: 12px; cursor: pointer; }
+
+  /* LOADER */
+  #loader { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100vh; gap: 16px; }
   .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   #loader p { color: var(--text-dim); font-size: 13px; }
 
-  #error-box { display: none; margin: 40px 20px; background: var(--loss-dim); border: 1px solid var(--loss); border-radius: 10px; padding: 16px; color: var(--loss); font-size: 13px; line-height: 1.6; }
+  /* ERROR */
+  #error-box { display: none; margin: 40px 20px; background: var(--loss-dim); border: 1px solid var(--loss); border-radius: 10px; padding: 16px; color: var(--loss); font-size: 13px; line-height: 1.8; }
 
+  /* DASHBOARD */
   #dashboard { display: none; padding-bottom: 60px; }
-
   .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 20px 20px 0; position: sticky; top: 0; z-index: 10; }
   .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
   .header-label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--label); margin-bottom: 4px; }
@@ -33,13 +50,10 @@
   .today-row { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 4px; font-size: 11px; color: var(--text-dim); }
   .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gain); animation: pulse 2s infinite; }
   @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.3} }
-
   .refresh-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-top: 1px solid var(--border); }
   .refresh-btn { background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 12px; cursor: pointer; }
   .last-updated { font-size: 11px; color: var(--label); }
-
   .section-title { padding: 16px 20px 8px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--label); }
-
   .holding { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; gap: 4px 12px; padding: 14px 20px; border-bottom: 1px solid var(--border); }
   .h-name { font-size: 14px; font-weight: 600; }
   .h-pnl { font-family: monospace; font-size: 13px; font-weight: 600; text-align: right; }
@@ -48,7 +62,6 @@
   .h-ltp { text-align: right; font-size: 11px; font-family: monospace; }
   .h-ltp .ltp-val { font-weight: 500; color: var(--text); }
   .h-ltp .ltp-chg.gain { color: var(--gain); } .h-ltp .ltp-chg.loss { color: var(--loss); }
-
   .footer-summary { margin: 24px 20px 0; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .fs-label { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--label); margin-bottom: 4px; }
   .fs-val { font-family: monospace; font-size: 14px; font-weight: 500; }
@@ -57,13 +70,24 @@
 </head>
 <body>
 
-<div id="loader">
-  <div class="spinner"></div>
-  <p id="loader-msg">Connecting to Upstox...</p>
+<!-- TOKEN ENTRY SCREEN -->
+<div id="token-screen">
+  <h2>📈 Live Portfolio</h2>
+  <p>Paste your Upstox Analytics Token below.<br>It will be saved on this device — you only need to do this once.</p>
+  <textarea id="token-input" placeholder="Paste your Analytics Token here..."></textarea>
+  <button class="btn" onclick="saveAndLoad()">Connect Portfolio</button>
 </div>
 
+<!-- LOADER -->
+<div id="loader">
+  <div class="spinner"></div>
+  <p id="loader-msg">Fetching live holdings...</p>
+</div>
+
+<!-- ERROR -->
 <div id="error-box"></div>
 
+<!-- DASHBOARD -->
 <div id="dashboard">
   <div class="header">
     <div class="header-top">
@@ -75,18 +99,19 @@
       <div style="text-align:right">
         <div class="header-label">Current</div>
         <div class="header-value" id="h-current">—</div>
-        <div class="today-row"><div class="live-dot"></div><span id="h-today">Live</span></div>
+        <div class="today-row"><div class="live-dot"></div><span>Live</span></div>
       </div>
     </div>
     <div class="refresh-bar">
       <span class="last-updated" id="last-updated">—</span>
-      <button class="refresh-btn" onclick="fetchHoldings()">⟳ Refresh</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn-sm" onclick="resetToken()">⚙ Token</button>
+        <button class="refresh-btn" onclick="fetchHoldings()">⟳ Refresh</button>
+      </div>
     </div>
   </div>
-
   <div class="section-title" id="holdings-count">Holdings</div>
   <div id="holdings-list"></div>
-
   <div class="footer-summary">
     <div><div class="fs-label">Total Invested</div><div class="fs-val" id="fs-invested">—</div></div>
     <div><div class="fs-label">Current Value</div><div class="fs-val" id="fs-current">—</div></div>
@@ -96,41 +121,51 @@
 </div>
 
 <script>
-const ACCESS_TOKEN = 'eyJ0eXAiOiJKV1QiLCJrZXlfaWQiOiJza192MS4wIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiI2NkFEQTUiLCJqdGkiOiI2YTI5MWVlYjA0OTE1YzBkOTcxODgyNGIiLCJpc011bHRpQ2xpZW50IjpmYWxzZSwiaXNQbHVzUGxhbiI6dHJ1ZSwiaXNFeHRlbmRlZCI6dHJ1ZSwiaWF0IjoxNzgxMDc5Nzg3LCJpc3MiOiJ1ZGFwaS1nYXRld2F5LXNlcnZpY2UiLCJleHAiOjE4MTI2NjQ4MDB9.98Txs53CnEibrk7aQ2ppJoWJi72BUhRnSOuiHYC1abE';
-
-function setMsg(m) { document.getElementById('loader-msg').textContent = m; }
-
-function showError(msg) {
-  document.getElementById('loader').style.display = 'none';
-  const b = document.getElementById('error-box');
-  b.style.display = 'block';
-  b.innerHTML = '⚠️ ' + msg + '<br><br><button onclick="fetchHoldings()" style="background:#5b6ef5;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer">Retry</button>';
-}
+const TOKEN_KEY = 'upstox_analytics_token';
 
 function fmtINR(n) {
   return '₹' + Math.abs(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 function sign(n) { return n >= 0 ? '+' : '−'; }
 
-async function fetchHoldings() {
-  document.getElementById('loader').style.display = 'flex';
-  document.getElementById('dashboard').style.display = 'none';
-  document.getElementById('error-box').style.display = 'none';
-  setMsg('Fetching live holdings...');
+function show(id) {
+  ['token-screen','loader','error-box','dashboard'].forEach(s => {
+    document.getElementById(s).style.display = s === id ? (s === 'loader' ? 'flex' : 'block') : 'none';
+  });
+}
 
+function saveAndLoad() {
+  const token = document.getElementById('token-input').value.trim();
+  if (!token) { alert('Please paste your token first'); return; }
+  localStorage.setItem(TOKEN_KEY, token);
+  fetchHoldings();
+}
+
+function resetToken() {
+  localStorage.removeItem(TOKEN_KEY);
+  show('token-screen');
+}
+
+function showError(msg) {
+  show('error-box');
+  document.getElementById('error-box').innerHTML =
+    '⚠️ ' + msg +
+    '<br><br><button onclick="fetchHoldings()" style="background:#5b6ef5;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;margin-right:8px">Retry</button>' +
+    '<button onclick="resetToken()" style="background:#1e2230;color:#9aa0bc;border:1px solid #1e2230;padding:8px 16px;border-radius:6px;cursor:pointer">Change Token</button>';
+}
+
+async function fetchHoldings() {
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) { show('token-screen'); return; }
+  show('loader');
+  document.getElementById('loader-msg').textContent = 'Fetching live holdings...';
   try {
     const res = await fetch('https://api.upstox.com/v2/portfolio/long-term-holdings', {
-      headers: {
-        'Authorization': 'Bearer ' + ACCESS_TOKEN,
-        'Accept': 'application/json'
-      }
+      headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' }
     });
-
     const data = await res.json();
-
-    if (res.status === 401) throw new Error('Token expired. Please regenerate from Upstox → My Apps.');
-    if (!data.data) throw new Error(data.message || JSON.stringify(data));
-
+    if (res.status === 401 || data.status === 'error') throw new Error(data.errors?.[0]?.message || 'Token invalid or expired');
+    if (!data.data) throw new Error('No holdings data returned');
     renderDashboard(data.data);
   } catch(e) {
     showError(e.message);
@@ -138,9 +173,7 @@ async function fetchHoldings() {
 }
 
 function renderDashboard(holdings) {
-  document.getElementById('loader').style.display = 'none';
-  document.getElementById('dashboard').style.display = 'block';
-
+  show('dashboard');
   let totalInvested = 0, totalCurrent = 0;
   holdings.forEach(h => {
     totalInvested += h.average_price * h.quantity;
@@ -151,65 +184,49 @@ function renderDashboard(holdings) {
 
   document.getElementById('h-invested').textContent = fmtINR(totalInvested);
   document.getElementById('h-current').textContent  = fmtINR(totalCurrent);
-
   const pill = document.getElementById('h-pnl-pill');
   pill.textContent = sign(totalPnl) + fmtINR(totalPnl) + '  (' + sign(totalPct) + Math.abs(totalPct).toFixed(2) + '%)';
   pill.className = 'return-pill ' + (totalPnl >= 0 ? 'gain' : 'loss');
-
   document.getElementById('fs-invested').textContent = fmtINR(totalInvested);
   document.getElementById('fs-current').textContent  = fmtINR(totalCurrent);
-
   const pnlEl = document.getElementById('fs-pnl');
   pnlEl.textContent = sign(totalPnl) + fmtINR(totalPnl);
   pnlEl.className = 'fs-val ' + (totalPnl >= 0 ? 'gain' : 'loss');
-
   const retEl = document.getElementById('fs-ret');
   retEl.textContent = sign(totalPct) + Math.abs(totalPct).toFixed(2) + '%';
   retEl.className = 'fs-val ' + (totalPct >= 0 ? 'gain' : 'loss');
-
   document.getElementById('holdings-count').textContent = 'Holdings · ' + holdings.length + ' positions';
   document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
 
   const list = document.getElementById('holdings-list');
   list.innerHTML = '';
-
-  holdings.sort((a, b) => {
-    const pnlA = (a.last_price - a.average_price) * a.quantity;
-    const pnlB = (b.last_price - b.average_price) * b.quantity;
-    return pnlB - pnlA;
-  });
-
+  holdings.sort((a, b) => ((b.last_price - b.average_price) * b.quantity) - ((a.last_price - a.average_price) * a.quantity));
   holdings.forEach(h => {
-    const pnl    = (h.last_price - h.average_price) * h.quantity;
-    const pnlPct = ((h.last_price - h.average_price) / h.average_price * 100);
+    const pnl     = (h.last_price - h.average_price) * h.quantity;
+    const pnlPct  = ((h.last_price - h.average_price) / h.average_price * 100);
     const invested = h.average_price * h.quantity;
-    const gain = pnl >= 0;
-    const dayChg = h.close_price ? h.last_price - h.close_price : 0;
-    const dayPct = h.close_price ? (dayChg / h.close_price * 100) : 0;
-    const dayGain = dayChg >= 0;
-
+    const gain    = pnl >= 0;
+    const dayChg  = h.close_price ? h.last_price - h.close_price : 0;
+    const dayPct  = h.close_price ? (dayChg / h.close_price * 100) : 0;
     const el = document.createElement('div');
     el.className = 'holding';
     el.innerHTML =
       '<div class="h-name">' + h.tradingsymbol + '</div>' +
-      '<div class="h-pnl ' + (gain ? 'gain' : 'loss') + '">' +
-        sign(pnl) + fmtINR(pnl) + '<br>' +
-        '<span style="font-size:10px;font-weight:400">(' + sign(pnlPct) + Math.abs(pnlPct).toFixed(2) + '%)</span>' +
-      '</div>' +
-      '<div class="h-meta">' +
-        '<span>Inv ' + fmtINR(invested) + '</span>' +
-        '<span>Qty ' + h.quantity + '</span>' +
-        '<span>Avg ₹' + h.average_price.toFixed(2) + '</span>' +
-      '</div>' +
-      '<div class="h-ltp">' +
-        '<div class="ltp-val">₹' + h.last_price.toFixed(2) + '</div>' +
-        '<div class="ltp-chg ' + (dayGain ? 'gain' : 'loss') + '">' + sign(dayPct) + Math.abs(dayPct).toFixed(2) + '% today</div>' +
-      '</div>';
+      '<div class="h-pnl ' + (gain?'gain':'loss') + '">' + sign(pnl) + fmtINR(pnl) +
+        '<br><span style="font-size:10px;font-weight:400">(' + sign(pnlPct) + Math.abs(pnlPct).toFixed(2) + '%)</span></div>' +
+      '<div class="h-meta"><span>Inv ' + fmtINR(invested) + '</span><span>Qty ' + h.quantity + '</span><span>Avg ₹' + h.average_price.toFixed(2) + '</span></div>' +
+      '<div class="h-ltp"><div class="ltp-val">₹' + h.last_price.toFixed(2) + '</div>' +
+        '<div class="ltp-chg ' + (dayChg>=0?'gain':'loss') + '">' + sign(dayPct) + Math.abs(dayPct).toFixed(2) + '% today</div></div>';
     list.appendChild(el);
   });
 }
 
-fetchHoldings();
+// On load — check if token already saved
+window.onload = () => {
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (token) fetchHoldings();
+  else show('token-screen');
+};
 </script>
 </body>
 </html>
