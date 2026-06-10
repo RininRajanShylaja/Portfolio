@@ -1,1 +1,218 @@
+cat > /mnt/user-data/outputs/index.html << 'HTMLEOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Portfolio</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d0f14; --surface: #141720; --border: #1e2230;
+    --label: #6b7294; --text: #e2e6f3; --text-dim: #9aa0bc;
+    --gain: #22d987; --gain-dim: #14492e; --loss: #f05252; --loss-dim: #4a1a1a;
+    --accent: #5b6ef5; --accent2: #a78bfa;
+  }
+  body { background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; font-size: 13px; min-height: 100vh; }
 
+  #loader { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; gap: 16px; }
+  .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #loader p { color: var(--text-dim); font-size: 13px; }
+
+  #error-box { display: none; margin: 40px 20px; background: var(--loss-dim); border: 1px solid var(--loss); border-radius: 10px; padding: 16px; color: var(--loss); font-size: 13px; line-height: 1.6; }
+
+  #dashboard { display: none; padding-bottom: 60px; }
+
+  .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 20px 20px 0; position: sticky; top: 0; z-index: 10; }
+  .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+  .header-label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--label); margin-bottom: 4px; }
+  .header-value { font-family: monospace; font-size: 20px; font-weight: 600; }
+  .return-pill { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; padding: 4px 10px; border-radius: 20px; font-family: monospace; font-size: 12px; font-weight: 500; }
+  .return-pill.gain { background: var(--gain-dim); color: var(--gain); }
+  .return-pill.loss { background: var(--loss-dim); color: var(--loss); }
+  .today-row { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 4px; font-size: 11px; color: var(--text-dim); }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gain); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.3} }
+
+  .refresh-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-top: 1px solid var(--border); }
+  .refresh-btn { background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 12px; cursor: pointer; }
+  .last-updated { font-size: 11px; color: var(--label); }
+
+  .section-title { padding: 16px 20px 8px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--label); }
+
+  .holding { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; gap: 4px 12px; padding: 14px 20px; border-bottom: 1px solid var(--border); }
+  .h-name { font-size: 14px; font-weight: 600; }
+  .h-pnl { font-family: monospace; font-size: 13px; font-weight: 600; text-align: right; }
+  .h-pnl.gain { color: var(--gain); } .h-pnl.loss { color: var(--loss); }
+  .h-meta { font-size: 11px; color: var(--text-dim); display: flex; gap: 10px; flex-wrap: wrap; }
+  .h-ltp { text-align: right; font-size: 11px; font-family: monospace; }
+  .h-ltp .ltp-val { font-weight: 500; color: var(--text); }
+  .h-ltp .ltp-chg.gain { color: var(--gain); } .h-ltp .ltp-chg.loss { color: var(--loss); }
+
+  .footer-summary { margin: 24px 20px 0; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .fs-label { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--label); margin-bottom: 4px; }
+  .fs-val { font-family: monospace; font-size: 14px; font-weight: 500; }
+  .fs-val.gain { color: var(--gain); } .fs-val.loss { color: var(--loss); }
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="spinner"></div>
+  <p id="loader-msg">Connecting to Upstox...</p>
+</div>
+
+<div id="error-box"></div>
+
+<div id="dashboard">
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="header-label">Invested</div>
+        <div class="header-value" id="h-invested">—</div>
+        <div class="return-pill gain" id="h-pnl-pill">—</div>
+      </div>
+      <div style="text-align:right">
+        <div class="header-label">Current</div>
+        <div class="header-value" id="h-current">—</div>
+        <div class="today-row"><div class="live-dot"></div><span id="h-today">Live</span></div>
+      </div>
+    </div>
+    <div class="refresh-bar">
+      <span class="last-updated" id="last-updated">—</span>
+      <button class="refresh-btn" onclick="fetchHoldings()">⟳ Refresh</button>
+    </div>
+  </div>
+
+  <div class="section-title" id="holdings-count">Holdings</div>
+  <div id="holdings-list"></div>
+
+  <div class="footer-summary">
+    <div><div class="fs-label">Total Invested</div><div class="fs-val" id="fs-invested">—</div></div>
+    <div><div class="fs-label">Current Value</div><div class="fs-val" id="fs-current">—</div></div>
+    <div><div class="fs-label">Total P&L</div><div class="fs-val" id="fs-pnl">—</div></div>
+    <div><div class="fs-label">Return</div><div class="fs-val" id="fs-ret">—</div></div>
+  </div>
+</div>
+
+<script>
+const ACCESS_TOKEN = 'eyJ0eXAiOiJKV1QiLCJrZXlfaWQiOiJza192MS4wIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiI2NkFEQTUiLCJqdGkiOiI2YTI5MWI2YjAzZDM5YjRjZTQ2Yzk4MDIiLCJpc011bHRpQ2xpZW50IjpmYWxzZSwiaXNQbHVzUGxhbiI6dHJ1ZSwiaXNFeHRlbmRlZCI6dHJ1ZSwiaWF0IjoxNzgxMDc4ODkxLCJpc3MiOiJ1ZGFwaS1nYXRld2F5LXNlcnZpY2UiLCJleHAiOjE4MTI2NjQ4MDB9.4y2SqBr3F3YSoIc7k3rQB60oJUcrqkDfdfo1sk6ER8Y';
+
+function setMsg(m) { document.getElementById('loader-msg').textContent = m; }
+
+function showError(msg) {
+  document.getElementById('loader').style.display = 'none';
+  const b = document.getElementById('error-box');
+  b.style.display = 'block';
+  b.innerHTML = '⚠️ ' + msg + '<br><br><button onclick="fetchHoldings()" style="background:#5b6ef5;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer">Retry</button>';
+}
+
+function fmtINR(n) {
+  return '₹' + Math.abs(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function sign(n) { return n >= 0 ? '+' : '−'; }
+
+async function fetchHoldings() {
+  document.getElementById('loader').style.display = 'flex';
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('error-box').style.display = 'none';
+  setMsg('Fetching live holdings...');
+
+  try {
+    const res = await fetch('https://api.upstox.com/v2/portfolio/long-term-holdings', {
+      headers: {
+        'Authorization': 'Bearer ' + ACCESS_TOKEN,
+        'Accept': 'application/json'
+      }
+    });
+
+    const data = await res.json();
+
+    if (res.status === 401) throw new Error('Token expired. Please regenerate from Upstox → My Apps.');
+    if (!data.data) throw new Error(data.message || JSON.stringify(data));
+
+    renderDashboard(data.data);
+  } catch(e) {
+    showError(e.message);
+  }
+}
+
+function renderDashboard(holdings) {
+  document.getElementById('loader').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+
+  let totalInvested = 0, totalCurrent = 0;
+  holdings.forEach(h => {
+    totalInvested += h.average_price * h.quantity;
+    totalCurrent  += h.last_price * h.quantity;
+  });
+  const totalPnl = totalCurrent - totalInvested;
+  const totalPct = (totalPnl / totalInvested * 100);
+
+  document.getElementById('h-invested').textContent = fmtINR(totalInvested);
+  document.getElementById('h-current').textContent  = fmtINR(totalCurrent);
+
+  const pill = document.getElementById('h-pnl-pill');
+  pill.textContent = sign(totalPnl) + fmtINR(totalPnl) + '  (' + sign(totalPct) + Math.abs(totalPct).toFixed(2) + '%)';
+  pill.className = 'return-pill ' + (totalPnl >= 0 ? 'gain' : 'loss');
+
+  document.getElementById('fs-invested').textContent = fmtINR(totalInvested);
+  document.getElementById('fs-current').textContent  = fmtINR(totalCurrent);
+
+  const pnlEl = document.getElementById('fs-pnl');
+  pnlEl.textContent = sign(totalPnl) + fmtINR(totalPnl);
+  pnlEl.className = 'fs-val ' + (totalPnl >= 0 ? 'gain' : 'loss');
+
+  const retEl = document.getElementById('fs-ret');
+  retEl.textContent = sign(totalPct) + Math.abs(totalPct).toFixed(2) + '%';
+  retEl.className = 'fs-val ' + (totalPct >= 0 ? 'gain' : 'loss');
+
+  document.getElementById('holdings-count').textContent = 'Holdings · ' + holdings.length + ' positions';
+  document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+
+  const list = document.getElementById('holdings-list');
+  list.innerHTML = '';
+
+  holdings.sort((a, b) => {
+    const pnlA = (a.last_price - a.average_price) * a.quantity;
+    const pnlB = (b.last_price - b.average_price) * b.quantity;
+    return pnlB - pnlA;
+  });
+
+  holdings.forEach(h => {
+    const pnl    = (h.last_price - h.average_price) * h.quantity;
+    const pnlPct = ((h.last_price - h.average_price) / h.average_price * 100);
+    const invested = h.average_price * h.quantity;
+    const gain = pnl >= 0;
+    const dayChg = h.close_price ? h.last_price - h.close_price : 0;
+    const dayPct = h.close_price ? (dayChg / h.close_price * 100) : 0;
+    const dayGain = dayChg >= 0;
+
+    const el = document.createElement('div');
+    el.className = 'holding';
+    el.innerHTML =
+      '<div class="h-name">' + h.tradingsymbol + '</div>' +
+      '<div class="h-pnl ' + (gain ? 'gain' : 'loss') + '">' +
+        sign(pnl) + fmtINR(pnl) + '<br>' +
+        '<span style="font-size:10px;font-weight:400">(' + sign(pnlPct) + Math.abs(pnlPct).toFixed(2) + '%)</span>' +
+      '</div>' +
+      '<div class="h-meta">' +
+        '<span>Inv ' + fmtINR(invested) + '</span>' +
+        '<span>Qty ' + h.quantity + '</span>' +
+        '<span>Avg ₹' + h.average_price.toFixed(2) + '</span>' +
+      '</div>' +
+      '<div class="h-ltp">' +
+        '<div class="ltp-val">₹' + h.last_price.toFixed(2) + '</div>' +
+        '<div class="ltp-chg ' + (dayGain ? 'gain' : 'loss') + '">' + sign(dayPct) + Math.abs(dayPct).toFixed(2) + '% today</div>' +
+      '</div>';
+    list.appendChild(el);
+  });
+}
+
+fetchHoldings();
+</script>
+</body>
+</html>
+HTMLEOF
+echo "Done"
