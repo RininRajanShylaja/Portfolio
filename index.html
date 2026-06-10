@@ -1,4 +1,3 @@
-cat > /mnt/user-data/outputs/index.html << 'HTMLEOF'
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -97,7 +96,7 @@ cat > /mnt/user-data/outputs/index.html << 'HTMLEOF'
 </div>
 
 <script>
-const ACCESS_TOKEN = 'eyJ0eXAiOiJKV1QiLCJrZXlfaWQiOiJza192MS4wIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiI2NkFEQTUiLCJqdGkiOiI2YTI5MWI2YjAzZDM5YjRjZTQ2Yzk4MDIiLCJpc011bHRpQ2xpZW50IjpmYWxzZSwiaXNQbHVzUGxhbiI6dHJ1ZSwiaXNFeHRlbmRlZCI6dHJ1ZSwiaWF0IjoxNzgxMDc4ODkxLCJpc3MiOiJ1ZGFwaS1nYXRld2F5LXNlcnZpY2UiLCJleHAiOjE4MTI2NjQ4MDB9.4y2SqBr3F3YSoIc7k3rQB60oJUcrqkDfdfo1sk6ER8Y';
+const ACCESS_TOKEN = 'eyJ0eXAiOiJKV1QiLCJrZXlfaWQiOiJza192MS4wIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiI2NkFEQTUiLCJqdGkiOiI2YTI5MWVlYjA0OTE1YzBkOTcxODgyNGIiLCJpc011bHRpQ2xpZW50IjpmYWxzZSwiaXNQbHVzUGxhbiI6dHJ1ZSwiaXNFeHRlbmRlZCI6dHJ1ZSwiaWF0IjoxNzgxMDc5Nzg3LCJpc3MiOiJ1ZGFwaS1nYXRld2F5LXNlcnZpY2UiLCJleHAiOjE4MTI2NjQ4MDB9.98Txs53CnEibrk7aQ2ppJoWJi72BUhRnSOuiHYC1abE';
 
 function setMsg(m) { document.getElementById('loader-msg').textContent = m; }
 
@@ -214,5 +213,3 @@ fetchHoldings();
 </script>
 </body>
 </html>
-HTMLEOF
-echo "Done"
