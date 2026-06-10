@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Debug</title>
+<style>
+  body { background:#0d0f14; color:#e2e6f3; font-family:system-ui; padding:20px; font-size:13px; }
+  textarea { width:100%; height:80px; background:#141720; border:1px solid #1e2230; color:#e2e6f3; border-radius:8px; padding:10px; font-size:11px; margin-bottom:10px; }
+  button { background:#5b6ef5; color:#fff; border:none; border-radius:8px; padding:12px; width:100%; font-size:14px; cursor:pointer; margin-bottom:10px; }
+  pre { background:#141720; border:1px solid #1e2230; border-radius:8px; padding:12px; font-size:11px; white-space:pre-wrap; word-break:break-all; line-height:1.6; margin-top:10px; }
+  .ok { color:#22d987; } .err { color:#f05252; } .info { color:#9aa0bc; }
+</style>
+</head>
+<body>
+<h3>🔧 API Debug</h3>
+<p style="color:#9aa0bc;font-size:12px;margin-bottom:12px">Paste token and tap each test button</p>
+
+<textarea id="tok" placeholder="Paste Analytics Token here..."></textarea>
+
+<button onclick="testProfile()">1. Test Profile API</button>
+<button onclick="testHoldings()">2. Test Holdings API</button>
+<button onclick="showIP()">3. Show My IP</button>
+
+<pre id="out">Results will appear here...</pre>
+
+<script>
+function log(msg, cls) {
+  const el = document.getElementById('out');
+  el.innerHTML += '<span class="'+(cls||'')+'">' + msg + '\n</span>';
+}
+function clear() { document.getElementById('out').innerHTML = ''; }
+
+async function testProfile() {
+  clear();
+  const tok = document.getElementById('tok').value.trim();
+  if (!tok) { log('⚠️ Paste token first!', 'err'); return; }
+  log('Testing /v2/profile...', 'info');
+  try {
+    const res = await fetch('https://api.upstox.com/v2/profile', {
+      headers: { 'Authorization': 'Bearer ' + tok, 'Accept': 'application/json' }
+    });
+    const data = await res.json();
+    log('HTTP ' + res.status, res.ok ? 'ok' : 'err');
+    log(JSON.stringify(data, null, 2), res.ok ? 'ok' : 'err');
+  } catch(e) {
+    log('❌ ' + e.message, 'err');
+  }
+}
+
+async function testHoldings() {
+  clear();
+  const tok = document.getElementById('tok').value.trim();
+  if (!tok) { log('⚠️ Paste token first!', 'err'); return; }
+  log('Testing /v2/portfolio/long-term-holdings...', 'info');
+  try {
+    const res = await fetch('https://api.upstox.com/v2/portfolio/long-term-holdings', {
+      headers: { 'Authorization': 'Bearer ' + tok, 'Accept': 'application/json' }
+    });
+    const data = await res.json();
+    log('HTTP ' + res.status, res.ok ? 'ok' : 'err');
+    log(JSON.stringify(data, null, 2), res.ok ? 'ok' : 'err');
+  } catch(e) {
+    log('❌ ' + e.message, 'err');
+  }
+}
+
+async function showIP() {
+  clear();
+  log('Fetching your IP...', 'info');
+  try {
+    const res = await fetch('https://api.ipify.org?format=json');
+    const data = await res.json();
+    log('Your IP: ' + data.ip, 'ok');
+    log('Make sure this IP is registered in Upstox!', 'info');
+  } catch(e) {
+    log('❌ ' + e.message, 'err');
+  }
+}
+</script>
+</body>
+</html>
